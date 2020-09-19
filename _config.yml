@@ -6,10 +6,10 @@
 # --- Required options --- #
 
 # Name of website
-title: My Website
+title: Shivamani Patil
 
 # Your name to show in the footer
-author: Some Person
+author: Shivamani Patil
 
 # --- List of links in the navigation bar --- #
 
@@ -18,7 +18,7 @@ navbar-links:
   Resources:
     - Beautiful Jekyll: "https://beautifuljekyll.com"
     - Learn markdown: "https://www.markdowntutorial.com/"
-  Author's home: "https://deanattali.com"
+  Home: "https://shivamanipatil.github.io"
 
 # --- Logo --- #
 
@@ -39,10 +39,9 @@ round-avatar: true
 # Select the social network links that you want to show in the footer.
 # Uncomment the links you want to show and add your information to each one.
 social-network-links:
-  email: "someone@example.com"
-  facebook: deanattali
-  github: daattali
-  twitter: daattali
+  email: "shivamanipatil10@gmail.com"
+  github: shivamanipatil
+  twitter: IamShivamani
 #  reddit: yourname
 #  linkedin: daattali
 #  xing: yourname
@@ -70,13 +69,13 @@ rss-description: This website is a virtual proof that I'm awesome
 # Select which social network share links to show in posts
 share-links-active:
   twitter: true
-  facebook: true
+  facebook: false
   linkedin: true
   vk: false
 
 # How to display the link to your website in the footer
 # Remove this if you don't want a link in the footer
-url-pretty: "MyWebsite.com"
+url-pretty: "Shivamani Patil"
 
 # Excerpt word length - Truncate the excerpt of each post on the feed page to the specified number of words
 excerpt_length: 50
