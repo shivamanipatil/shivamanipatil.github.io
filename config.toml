@@ -1,4 +1,4 @@
-baseURL = "shivamanipatil.github.io"
+baseURL = "http://shivamanipatil.github.io/blog/"
 languageCode = "en-us"
 title = "Shivamani Patil"
 theme = "archie"
