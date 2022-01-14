@@ -6,7 +6,6 @@ theme = "archie"
 pygmentsstyle = "monokai"
 pygmentscodefences = true
 pygmentscodefencesguesssyntax = true
-googleAnalytics = "G-QTDPDNZPH0"
 
 paginate=3 # articles per page
 [params]
