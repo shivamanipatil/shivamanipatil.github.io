@@ -1,0 +1,45 @@
+baseURL = "shivamanipatil.github.io"
+languageCode = "en-us"
+title = "Shivamani Patil"
+theme = "archie"
+
+pygmentsstyle = "monokai"
+pygmentscodefences = true
+pygmentscodefencesguesssyntax = true
+googleAnalytics = "G-N6ZNDJVKVJ"
+
+paginate=3 # articles per page
+[params]
+	mode="auto"
+	useCDN=false
+
+[[params.social]]
+name = "GitHub"
+icon = "github"
+url = "https://github.com/shivamanipatil"
+
+[[params.social]]
+name = "Twitter"
+icon = "twitter"
+url = "https://twitter.com/ShivamaniPatil_"
+
+[[menu.main]]
+name = "Home"
+url = "/"
+weight = 1
+
+[[menu.main]]
+name = "All posts"
+url = "/posts"
+weight = 2
+
+[[menu.main]]
+name = "Open Source"
+url = "/open-source"
+weight = 3
+
+[[menu.main]]
+name = "About"
+url = "/about"
+weight = 4
+
