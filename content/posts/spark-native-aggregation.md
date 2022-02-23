@@ -57,7 +57,7 @@ case TestAggregation(child: Expression)
 
 ## Example
 
-* `class Average` holds count and sum of elements and also acts as internal aggregate buffer.
+* `case class Average` holds count and sum of elements and also acts as internal aggregate buffer.
 * Aggregate takes in a numeric column and an extra argument n and return avg(column) * n.
 * In SparkSQL this will look like :
 ```SQL
