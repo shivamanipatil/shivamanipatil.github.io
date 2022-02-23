@@ -1,4 +1,4 @@
-baseURL = "https://shivamanipatil.github.io/blog/"
+baseURL = "https://shivamanipatil.github.io/"
 languageCode = "en-us"
 title = "Shivamani Patil"
 theme = "archie"
@@ -7,7 +7,7 @@ pygmentsstyle = "monokai"
 pygmentscodefences = true
 pygmentscodefencesguesssyntax = true
 
-paginate=3 # articles per page
+paginate=4 # articles per page
 [params]
 	mode="auto"
 	useCDN=false

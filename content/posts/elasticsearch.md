@@ -72,7 +72,7 @@ pip install django-elasticsearch-dsl
 
 Remember for Elasticsearch 7.0 and later, use the major version 7 (7.x.y) of this library. Doing _pip list_ shows.
 
-![](/static/images/elasticsearch/piplist.png)
+![](/piplist.png)
 
 Add this snippet to django setting:
 

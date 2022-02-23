@@ -16,8 +16,8 @@ date : "2022-02-23"
 * Core of Spark dataframe API and SQL queries.
 * Supports cost based and rule based optimization.
 * Built to be extensible : 
-    1. Adding new optimization techniques and features
-    2. Extending the optimizier for custom use cases
+    * Adding new optimization techniques and features
+    * Extending the optimizier for custom use cases
 * At core it uses trees
 * On top of it various libraries are written for query processing, optimization and execution.
 
@@ -27,7 +27,8 @@ date : "2022-02-23"
 * Trees in Catalyst consists of node objects.
 * Node - type and zero/more children
 * E.g If Literal(v: Int), Attribute(name: String), Add(l: TreeNode, r: TreeNode) are simple node types then x+(2+5) can be represented as Add(Attribute(x), Add(Literal(2), Literal(5))).
-![Expression Tree](/static/images/spark-catalyst/catalyst-tree.png)
+
+![Expression Tree](/catalyst-tree.png)
 
 ## Rules
 
