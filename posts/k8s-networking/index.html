@@ -1,0 +1,106 @@
+<!doctype html><html><head>
+<meta charset=utf-8>
+<meta http-equiv=x-ua-compatible content="IE=edge"><title>Traffic flow in Kubernetes 101 - Shivamani Patil</title><meta name=viewport content="width=device-width,initial-scale=1">
+<meta name=description content="Table of contents  Intra pod communication Inter pod communication CNI plugin Pod to service communication  Intra pod communication When pod is created,
+ It is assigned to a node. A network namespace is created for it(i.e all of that pod&rsquo;s containers belong to that namespace), IP is assigned to it.  For every pod in the cluster there is pause container running in the background. The pause container creates and holds network namespace for that pod.">
+<meta property="og:image" content>
+<meta property="og:title" content="Traffic flow in Kubernetes 101">
+<meta property="og:description" content="Table of contents  Intra pod communication Inter pod communication CNI plugin Pod to service communication  Intra pod communication When pod is created,
+ It is assigned to a node. A network namespace is created for it(i.e all of that pod&rsquo;s containers belong to that namespace), IP is assigned to it.  For every pod in the cluster there is pause container running in the background. The pause container creates and holds network namespace for that pod.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://shivamanipatil.github.io/posts/k8s-networking/"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2022-01-16T00:00:00+00:00">
+<meta property="article:modified_time" content="2022-01-16T00:00:00+00:00">
+<meta name=twitter:card content="summary">
+<meta name=twitter:title content="Traffic flow in Kubernetes 101">
+<meta name=twitter:description content="Table of contents  Intra pod communication Inter pod communication CNI plugin Pod to service communication  Intra pod communication When pod is created,
+ It is assigned to a node. A network namespace is created for it(i.e all of that pod&rsquo;s containers belong to that namespace), IP is assigned to it.  For every pod in the cluster there is pause container running in the background. The pause container creates and holds network namespace for that pod.">
+<script src=https://shivamanipatil.github.io/js/feather.min.js></script>
+<link href=https://shivamanipatil.github.io/css/fonts.b685ac6f654695232de7b82a9143a46f9e049c8e3af3a21d9737b01f4be211d1.css rel=stylesheet>
+<link rel=stylesheet type=text/css media=screen href=https://shivamanipatil.github.io/css/main.2f9b5946627215dc1ae7fa5f82bfc9cfcab000329136befeea5733f21e77d68f.css>
+<link id=darkModeStyle rel=stylesheet type=text/css href=https://shivamanipatil.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css media="(prefers-color-scheme: dark)">
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-44FM66QXX5"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-44FM66QXX5')</script>
+</head>
+<body>
+<div class=content><header>
+<div class=main>
+<a href=https://shivamanipatil.github.io/>Shivamani Patil</a>
+</div>
+<nav>
+<a href=/>Home</a>
+<a href=/posts>All posts</a>
+<a href=/open-source>Open Source</a>
+<a href=/about>About</a>
+</nav>
+</header>
+<main>
+<article>
+<div class=title>
+<h1 class=title>Traffic flow in Kubernetes 101</h1>
+<div class=meta>Posted on Jan 16, 2022</div>
+</div>
+<section class=body>
+<h2 id=table-of-contents>Table of contents</h2>
+<ol>
+<li>Intra pod communication</li>
+<li>Inter pod communication</li>
+<li>CNI plugin</li>
+<li>Pod to service communication</li>
+</ol>
+<h2 id=intra-pod-communication>Intra pod communication</h2>
+<p>When pod is created,</p>
+<ol>
+<li>It is assigned to a node.</li>
+<li>A network namespace is created for it(i.e all of that pod&rsquo;s containers belong to that namespace),</li>
+<li>IP is assigned to it.</li>
+</ol>
+<p><strong>For every pod in the cluster there is pause container running in the background. The pause container creates and holds network namespace for that pod.</strong></p>
+<p>So what are the reasons to have pause containers for pods :</p>
+<ol>
+<li>Basis for sharing the namespace amongst the pod containers</li>
+<li>Act as init or PID=1 proccess for pod namespace.</li>
+</ol>
+<p>Detailed discussion on this topic : <a href=https://www.ianlewis.org/en/almighty-pause-container>almighty-pause-container</a></p>
+<p>Now, the pod and all its containers have same IP. Applications or containers inside a pod essentially communicate with each other as if they are on localhost itself.</p>
+<h2 id=interpod-communication>Interpod communication</h2>
+<p>Interpod communication can happen between :</p>
+<ol>
+<li>pods belonging to same node</li>
+<li>pods belonging to different nodes.</li>
+</ol>
+<p>A <em>tunnel</em> is created between node&rsquo;s root namespace and pod&rsquo;s namespace using virtual ethernet(veth) pairs. After these veth pairs are created each <em>tunnel</em> will have its end in the root namespace. <strong>And communication between same node pod&rsquo;s happens inside root namespace using these.</strong></p>
+<p>A virtual bridge(or &lsquo;switch&rsquo;) act as intermediatory to connect these ethernet pair ends in root namespace to each other.</p>
+<p><em>But then what about pods that live in different nodes?</em></p>
+<p>Here there is just an extra step than before. When pod tries to connect to other pod the ip address in not found in local network of that node(as it lies in other node) so this request is sent to default gateway which will route it to the desired node where the receiver pod lives and connection is established.</p>
+<h2 id=cni-plugincontainer-network-interface>CNI plugin(Container Network Interface)</h2>
+<ul>
+<li>CNI plugin satisfies the k8s networking requirements for a node (so each k8s node has to install this plugin).</li>
+<li>As name suggests it is pluggable and many options are present which follow the CNI standard e.g cillium, flannel, calico etc.</li>
+<li>Difference between them is that they follow different networking setups and strategies that give them various advantages and disadvantages.</li>
+<li>Without CNI plugins things like creating pod namespaces, created virtual ethernet pairs, bridges, setting up routes, networking would have to be done manually. Also, their updation and deletion will have to be done manually. Which seems like a cumbersome task.</li>
+</ul>
+<h2 id=pod-to-service-communication>Pod to service communication</h2>
+<p>When a service is created it is given a static IP address which doesn&rsquo;t change but pod&rsquo;s IP can change when restarted. Without going in too much details what happens:</p>
+<ol>
+<li>Pod initiates request to service IP</li>
+<li>A hook is triggered which does a DNAT change and changes the IP address of service to IP address of destination pod. (This change or connection information stored)</li>
+<li>When the destination pod sends the response another hook is triggered which does SNAT and source of our destination pod is changed to original service IP (using information stored in step 3).</li>
+</ol>
+<p>So this way communication happens between 2 pod&rsquo;s with services in between them.</p>
+<p>References :</p>
+<ol>
+<li><a href=https://learnk8s.io/kubernetes-network-packets>https://learnk8s.io/kubernetes-network-packets</a></li>
+</ol>
+</section>
+<div class=post-tags>
+</div>
+</article>
+</main>
+<footer>
+<hr><a class=soc href=https://github.com/shivamanipatil title=GitHub><i data-feather=github></i></a>|<a class=soc href=https://twitter.com/ShivamaniPatil_ title=Twitter><i data-feather=twitter></i></a>|⚡️
+2022 <a href=https://github.com/athul/archie>Archie Theme</a> | Built with <a href=https://gohugo.io>Hugo</a>
+</footer>
+<script>feather.replace()</script></div>
+</body>
+</html>
