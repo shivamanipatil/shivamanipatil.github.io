@@ -1,258 +1,182 @@
-<!doctype html><html><head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="IE=edge"><title>Spark aggregation with native API's - Shivamani Patil</title><meta name=viewport content="width=device-width,initial-scale=1">
-<meta name=description content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods).">
-<meta property="og:image" content>
-<meta property="og:title" content="Spark aggregation with native API's">
-<meta property="og:description" content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods).">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://shivamanipatil.github.io/posts/spark-agg/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2022-02-24T00:00:00+00:00">
-<meta property="article:modified_time" content="2022-02-24T00:00:00+00:00">
-<meta name=twitter:card content="summary">
-<meta name=twitter:title content="Spark aggregation with native API's">
-<meta name=twitter:description content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods).">
-<script src=https://shivamanipatil.github.io/js/feather.min.js></script>
-<link href=https://shivamanipatil.github.io/css/fonts.b685ac6f654695232de7b82a9143a46f9e049c8e3af3a21d9737b01f4be211d1.css rel=stylesheet>
-<link rel=stylesheet type=text/css media=screen href=https://shivamanipatil.github.io/css/main.2f9b5946627215dc1ae7fa5f82bfc9cfcab000329136befeea5733f21e77d68f.css>
-<link id=darkModeStyle rel=stylesheet type=text/css href=https://shivamanipatil.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css media="(prefers-color-scheme: dark)">
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-44FM66QXX5"></script>
-<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','G-44FM66QXX5')</script>
-</head>
-<body>
-<div class=content><header>
-<div class=main>
-<a href=https://shivamanipatil.github.io/>Shivamani Patil</a>
-</div>
-<nav>
-<a href=/>Home</a>
+<!doctype html><html><head><meta charset=utf-8><meta http-equiv=x-ua-compatible content="IE=edge"><title>Spark aggregation with native API's - Shivamani Patil</title><meta name=viewport content="width=device-width,initial-scale=1"><meta name=description content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods)."><meta property="og:image" content><meta property="og:title" content="Spark aggregation with native API's"><meta property="og:description" content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods)."><meta property="og:type" content="article"><meta property="og:url" content="https://shivamanipatil.github.io/posts/spark-agg/"><meta property="article:section" content="posts"><meta property="article:published_time" content="2022-02-24T00:00:00+00:00"><meta property="article:modified_time" content="2022-02-24T00:00:00+00:00"><meta name=twitter:card content="summary"><meta name=twitter:title content="Spark aggregation with native API's"><meta name=twitter:description content="Table of contents  Spark aggregation Overview TypedImperativeAggregate[T] abstract class Example  Spark aggregation Overview  User Defined Aggregate Functions can be used. But are restrictive and require workarounds even for basic requirements. Aggregates are unevaluable expressions and cannot have eval and doGenCode method. Basic requirement would be to use user defined java objects as internal spark aggregation buffer type. And, passing extra arguments to aggregates e.g aggregate(col, 0.24) Spark provides TypedImperativeAggregate[T] contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods)."><script src=https://shivamanipatil.github.io/js/feather.min.js></script>
+<link href=https://shivamanipatil.github.io/css/fonts.b685ac6f654695232de7b82a9143a46f9e049c8e3af3a21d9737b01f4be211d1.css rel=stylesheet><link rel=stylesheet type=text/css media=screen href=https://shivamanipatil.github.io/css/main.2f9b5946627215dc1ae7fa5f82bfc9cfcab000329136befeea5733f21e77d68f.css><link id=darkModeStyle rel=stylesheet type=text/css href=https://shivamanipatil.github.io/css/dark.726cd11ca6eb7c4f7d48eb420354f814e5c1b94281aaf8fd0511c1319f7f78a4.css media="(prefers-color-scheme: dark)"><script async src="https://www.googletagmanager.com/gtag/js?id=G-44FM66QXX5"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-44FM66QXX5")</script></head><body><div class=content><header><div class=main><a href=https://shivamanipatil.github.io/>Shivamani Patil</a></div><nav><a href=/>Home</a>
 <a href=/posts>All posts</a>
 <a href=/open-source>Open Source</a>
-<a href=/about>About</a>
-</nav>
-</header>
-<main>
-<article>
-<div class=title>
-<h1 class=title>Spark aggregation with native API's</h1>
-<div class=meta>Posted on Feb 24, 2022</div>
-</div>
-<section class=body>
-<h2 id=table-of-contents>Table of contents</h2>
-<ol>
-<li>Spark aggregation Overview</li>
-<li>TypedImperativeAggregate[T] abstract class</li>
-<li>Example</li>
-</ol>
-<h2 id=spark-aggregation-overview>Spark aggregation Overview</h2>
-<ul>
-<li><a href=https://spark.apache.org/docs/latest/sql-ref-functions-udf-aggregate.html>User Defined Aggregate Functions</a> can be used. But are restrictive and require workarounds even for basic requirements.</li>
-<li>Aggregates are unevaluable expressions and cannot have eval and doGenCode method.</li>
-<li>Basic requirement would be to use user defined java objects as internal spark aggregation buffer type.</li>
-<li>And, passing extra arguments to aggregates e.g aggregate(col, 0.24)</li>
-<li>Spark provides <strong>TypedImperativeAggregate[T]</strong> contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods).</li>
-</ul>
-<h2 id=typedimperativeaggregatet-abstract-class>TypedImperativeAggregate[T] abstract class</h2>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=color:#66d9ef>case</span> <span style=color:#a6e22e>TestAggregation</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> 
-  <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>TypedImperativeAggregate</span><span style=color:#f92672>[</span><span style=color:#66d9ef>T</span><span style=color:#f92672>]</span>  <span style=color:#f92672>{</span>
-
-  <span style=color:#75715e>// Check input types
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> checkInputDataTypes<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TypeCheckResult</span>
-
-  <span style=color:#75715e>// Initialize T
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> createAggregationBuffer<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
-
-  <span style=color:#75715e>// Update T with row
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> update<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>,</span> inputRow<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>InternalRow</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
-
-  <span style=color:#75715e>// Merge Intermediate buffers onto first buffer
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> merge<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>,</span> other<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
- 
-  <span style=color:#75715e>// Final value
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> eval<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Any</span> 
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewMutableAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TestAggregation</span> 
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewInputAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TestAggregation</span> 
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> children<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Seq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Expression</span><span style=color:#f92672>]</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> nullable<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Boolean</span>
-
-  <span style=color:#75715e>// Datatype of output
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> dataType<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>DataType</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> prettyName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>String</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> serialize<span style=color:#f92672>(</span>obj<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>]</span> 
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> deserialize<span style=color:#f92672>(</span>bytes<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span> 
-<span style=color:#f92672>}</span>
-</code></pre></div><h2 id=example>Example</h2>
-<ul>
-<li><code>case class Average</code> holds count and sum of elements and also acts as internal aggregate buffer.</li>
-<li>Aggregate takes in a numeric column and an extra argument n and return avg(column) * n.</li>
-<li>In SparkSQL this will look like :</li>
-</ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-SQL data-lang=SQL><span style=color:#66d9ef>SELECT</span> multiply_average(salary, <span style=color:#ae81ff>2</span>) <span style=color:#66d9ef>as</span> average_salary <span style=color:#66d9ef>FROM</span> employees
-</code></pre></div><ul>
-<li>Spark alchemy&rsquo;s NativeFunctionRegistration is used to register functions to spark.</li>
-<li>Aggregate Code :</li>
-</ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=color:#66d9ef>import</span> com.swoop.alchemy.spark.expressions.NativeFunctionRegistration
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.SparkSession
-<span style=color:#66d9ef>import</span> org.apache.spark.<span style=color:#f92672>{</span><span style=color:#a6e22e>SparkConf</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>SparkContext</span><span style=color:#f92672>}</span>
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.InternalRow
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.analysis.TypeCheckResult
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.expressions._
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.expressions.aggregate.TypedImperativeAggregate
-<span style=color:#66d9ef>import</span> org.apache.spark.sql.types._
-
-<span style=color:#66d9ef>import</span> java.io.<span style=color:#f92672>{</span><span style=color:#a6e22e>ByteArrayInputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ByteArrayOutputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ObjectInputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ObjectOutputStream</span><span style=color:#f92672>}</span>
-
-
-<span style=color:#66d9ef>case</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Average</span><span style=color:#f92672>(</span><span style=color:#66d9ef>var</span> sum<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Long</span><span style=color:#f92672>,</span> <span style=color:#66d9ef>var</span> count<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Long</span><span style=color:#f92672>)</span>
-
-<span style=color:#66d9ef>case</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>AvgTest</span><span style=color:#f92672>(</span>
-                  child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span>
-                  nExpression <span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span>
-                  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>val</span> mutableAggBufferOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span>
-                  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>val</span> inputAggBufferOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
-  <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>TypedImperativeAggregate</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Average</span><span style=color:#f92672>]</span>  <span style=color:#f92672>{</span>
-
-<span style=color:#75715e>//  private lazy val n: Long = nExpression.eval().asInstanceOf[Long]
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>def</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> <span style=color:#a6e22e>Literal</span><span style=color:#f92672>(</span><span style=color:#ae81ff>1</span><span style=color:#f92672>),</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
-  <span style=color:#66d9ef>def</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span> nExpression<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> nExpression<span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> checkInputDataTypes<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TypeCheckResult</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    child<span style=color:#f92672>.</span>dataType <span style=color:#66d9ef>match</span> <span style=color:#f92672>{</span>
-      <span style=color:#66d9ef>case</span> <span style=color:#a6e22e>LongType</span> <span style=color:#66d9ef>=&gt;</span> <span style=color:#a6e22e>TypeCheckResult</span><span style=color:#f92672>.</span><span style=color:#a6e22e>TypeCheckSuccess</span>
-      <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>=&gt;</span> <span style=color:#a6e22e>TypeCheckResult</span><span style=color:#f92672>.</span><span style=color:#a6e22e>TypeCheckFailure</span><span style=color:#f92672>(</span><span style=color:#e6db74>s&#34;</span><span style=color:#e6db74>$prettyName</span><span style=color:#e6db74> only supports long input&#34;</span><span style=color:#f92672>)</span>
-    <span style=color:#f92672>}</span>
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> createAggregationBuffer<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>Average</span><span style=color:#f92672>(</span><span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> update<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>,</span> inputRow<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>InternalRow</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> value <span style=color:#66d9ef>=</span> child<span style=color:#f92672>.</span>eval<span style=color:#f92672>(</span>inputRow<span style=color:#f92672>)</span>
-    buffer<span style=color:#f92672>.</span>sum <span style=color:#f92672>+=</span> value<span style=color:#f92672>.</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Long</span><span style=color:#f92672>]</span>
-    buffer<span style=color:#f92672>.</span>count <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1</span>
-    buffer
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> merge<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>,</span> other<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    buffer<span style=color:#f92672>.</span>sum <span style=color:#f92672>+=</span> other<span style=color:#f92672>.</span>sum
-    buffer<span style=color:#f92672>.</span>count <span style=color:#f92672>+=</span> other<span style=color:#f92672>.</span>count
-    buffer
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> eval<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Any</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> n<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> nExpression<span style=color:#f92672>.</span>eval<span style=color:#f92672>().</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Int</span><span style=color:#f92672>]</span>
-    <span style=color:#f92672>((</span>buffer<span style=color:#f92672>.</span>sum<span style=color:#f92672>*</span>n<span style=color:#f92672>)/(</span>buffer<span style=color:#f92672>.</span>count<span style=color:#f92672>))</span>
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewMutableAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>AvgTest</span> <span style=color:#f92672>=</span>
-    copy<span style=color:#f92672>(</span>mutableAggBufferOffset <span style=color:#66d9ef>=</span> newOffset<span style=color:#f92672>)</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewInputAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>AvgTest</span> <span style=color:#f92672>=</span>
-    copy<span style=color:#f92672>(</span>inputAggBufferOffset <span style=color:#66d9ef>=</span> newOffset<span style=color:#f92672>)</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> children<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Seq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Expression</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Seq</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> nExpression<span style=color:#f92672>)</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> nullable<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Boolean</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>
-
-  <span style=color:#75715e>// The result type is the same as the input type.
-</span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> dataType<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>DataType</span> <span style=color:#f92672>=</span> child<span style=color:#f92672>.</span>dataType
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> prettyName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>String</span> <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;avg_test&#34;</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> serialize<span style=color:#f92672>(</span>obj<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> stream<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>ByteArrayOutputStream</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ByteArrayOutputStream</span><span style=color:#f92672>()</span>
-    <span style=color:#66d9ef>val</span> oos <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ObjectOutputStream</span><span style=color:#f92672>(</span>stream<span style=color:#f92672>)</span>
-    oos<span style=color:#f92672>.</span>writeObject<span style=color:#f92672>(</span>obj<span style=color:#f92672>)</span>
-    oos<span style=color:#f92672>.</span>close<span style=color:#f92672>()</span>
-    stream<span style=color:#f92672>.</span>toByteArray
-  <span style=color:#f92672>}</span>
-
-  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> deserialize<span style=color:#f92672>(</span>bytes<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> ois <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ObjectInputStream</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ByteArrayInputStream</span><span style=color:#f92672>(</span>bytes<span style=color:#f92672>))</span>
-    <span style=color:#66d9ef>val</span> value <span style=color:#66d9ef>=</span> ois<span style=color:#f92672>.</span>readObject
-    ois<span style=color:#f92672>.</span>close<span style=color:#f92672>()</span>
-    value<span style=color:#f92672>.</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Average</span><span style=color:#f92672>]</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><ul>
-<li>Driver code :</li>
-</ul>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=color:#66d9ef>object</span> <span style=color:#a6e22e>TestAgg</span> <span style=color:#f92672>{</span>
-  <span style=color:#66d9ef>object</span> <span style=color:#a6e22e>BegRegister</span> <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>NativeFunctionRegistration</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> expressions<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Map</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span>, <span style=color:#f92672>(</span><span style=color:#66d9ef>ExpressionInfo</span>, <span style=color:#66d9ef>FunctionBuilder</span><span style=color:#f92672>)]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Map</span><span style=color:#f92672>(</span>
-      expression<span style=color:#f92672>[</span><span style=color:#66d9ef>AvgTest</span><span style=color:#f92672>](</span><span style=color:#e6db74>&#34;multiply_average&#34;</span><span style=color:#f92672>)</span>
-    <span style=color:#f92672>)</span>
-  <span style=color:#f92672>}</span>
-  <span style=color:#66d9ef>def</span> main<span style=color:#f92672>(</span>args<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Unit</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
-    <span style=color:#66d9ef>val</span> conf <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>SparkConf</span><span style=color:#f92672>().</span>setMaster<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;local[*]&#34;</span><span style=color:#f92672>).</span>setAppName<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;FirstDemo&#34;</span><span style=color:#f92672>)</span>
-    <span style=color:#66d9ef>val</span> sc <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>SparkContext</span><span style=color:#f92672>(</span>conf<span style=color:#f92672>)</span>
-    <span style=color:#66d9ef>val</span> spark <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>SparkSession</span><span style=color:#f92672>.</span>builder<span style=color:#f92672>().</span>appName<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;Demo&#34;</span><span style=color:#f92672>).</span>config<span style=color:#f92672>(</span>conf<span style=color:#f92672>).</span>getOrCreate<span style=color:#f92672>()</span>
-
-
-    <span style=color:#a6e22e>BegRegister</span><span style=color:#f92672>.</span>registerFunctions<span style=color:#f92672>(</span>spark<span style=color:#f92672>)</span>
-      <span style=color:#66d9ef>val</span> df <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>read<span style=color:#f92672>.</span>json<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;src/test/resources/employees.json&#34;</span><span style=color:#f92672>)</span>
-      df<span style=color:#f92672>.</span>createOrReplaceTempView<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;employees&#34;</span><span style=color:#f92672>)</span>
-      df<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
-      <span style=color:#75715e>/*
-</span><span style=color:#75715e>      +-------+------+
-</span><span style=color:#75715e>      |   name|salary|
-</span><span style=color:#75715e>      +-------+------+
-</span><span style=color:#75715e>      |Michael|  3000|
-</span><span style=color:#75715e>      |   Andy|  4500|
-</span><span style=color:#75715e>      | Justin|  3500|
-</span><span style=color:#75715e>      |  Berta|  4000|
-</span><span style=color:#75715e>      +-------+------+
-</span><span style=color:#75715e>       */</span>
-      <span style=color:#66d9ef>val</span> result <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
-      result<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
-    <span style=color:#75715e>/*
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |average_salary|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |          3750|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>     */</span>
-      <span style=color:#66d9ef>val</span> result1 <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary, 2) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
-      result1<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
-      <span style=color:#75715e>/*
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |average_salary|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |          7500|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>     */</span>
-      <span style=color:#66d9ef>val</span> result2 <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary, 3) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
-      result2<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
-      <span style=color:#75715e>/*
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |average_salary|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      |         11250|
-</span><span style=color:#75715e>      +--------------+
-</span><span style=color:#75715e>      */</span>
-  <span style=color:#f92672>}</span>
-<span style=color:#f92672>}</span>
-</code></pre></div><ul>
-<li>Here, <code>nExpression</code> represents our <code>n</code> argument. Other lines are self-explanatory.</li>
-</ul>
-</section>
-<div class=post-tags>
-</div>
-</article>
-</main>
-<footer>
-<hr><a class=soc href=https://github.com/shivamanipatil title=GitHub><i data-feather=github></i></a>|<a class=soc href=https://twitter.com/ShivamaniPatil_ title=Twitter><i data-feather=twitter></i></a>|⚡️
-2022 <a href=https://github.com/athul/archie>Archie Theme</a> | Built with <a href=https://gohugo.io>Hugo</a>
-</footer>
-<script>feather.replace()</script></div>
-</body>
-</html>
+<a href=/about>About</a></nav></header><main><article><div class=title><h1 class=title>Spark aggregation with native API's</h1><div class=meta>Posted on Feb 24, 2022</div></div><section class=body><h2 id=table-of-contents>Table of contents</h2><ol><li>Spark aggregation Overview</li><li>TypedImperativeAggregate[T] abstract class</li><li>Example</li></ol><h2 id=spark-aggregation-overview>Spark aggregation Overview</h2><ul><li><a href=https://spark.apache.org/docs/latest/sql-ref-functions-udf-aggregate.html>User Defined Aggregate Functions</a> can be used. But are restrictive and require workarounds even for basic requirements.</li><li>Aggregates are unevaluable expressions and cannot have eval and doGenCode method.</li><li>Basic requirement would be to use user defined java objects as internal spark aggregation buffer type.</li><li>And, passing extra arguments to aggregates e.g aggregate(col, 0.24)</li><li>Spark provides <strong>TypedImperativeAggregate[T]</strong> contract for such requirement (imperative as in expressed in terms of imperative initialize, update, and merge methods).</li></ul><h2 id=typedimperativeaggregatet-abstract-class>TypedImperativeAggregate[T] abstract class</h2><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=display:flex><span><span style=color:#66d9ef>case</span> <span style=color:#a6e22e>TestAggregation</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> 
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>TypedImperativeAggregate</span><span style=color:#f92672>[</span><span style=color:#66d9ef>T</span><span style=color:#f92672>]</span>  <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Check input types
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> checkInputDataTypes<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TypeCheckResult</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Initialize T
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> createAggregationBuffer<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Update T with row
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> update<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>,</span> inputRow<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>InternalRow</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Merge Intermediate buffers onto first buffer
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> merge<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>,</span> other<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span>
+</span></span><span style=display:flex><span> 
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Final value
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> eval<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Any</span> 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewMutableAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TestAggregation</span> 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewInputAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TestAggregation</span> 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> children<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Seq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Expression</span><span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> nullable<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Boolean</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// Datatype of output
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> dataType<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>DataType</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> prettyName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>String</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> serialize<span style=color:#f92672>(</span>obj<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>]</span> 
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> deserialize<span style=color:#f92672>(</span>bytes<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>T</span> 
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span></code></pre></div><h2 id=example>Example</h2><ul><li><code>case class Average</code> holds count and sum of elements and also acts as internal aggregate buffer.</li><li>Aggregate takes in a numeric column and an extra argument n and return avg(column) * n.</li><li>In SparkSQL this will look like :</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-SQL data-lang=SQL><span style=display:flex><span><span style=color:#66d9ef>SELECT</span> multiply_average(salary, <span style=color:#ae81ff>2</span>) <span style=color:#66d9ef>as</span> average_salary <span style=color:#66d9ef>FROM</span> employees
+</span></span></code></pre></div><ul><li>Spark alchemy&rsquo;s NativeFunctionRegistration is used to register functions to spark.</li><li>Aggregate Code :</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=display:flex><span><span style=color:#66d9ef>import</span> com.swoop.alchemy.spark.expressions.NativeFunctionRegistration
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.SparkSession
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.<span style=color:#f92672>{</span><span style=color:#a6e22e>SparkConf</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>SparkContext</span><span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.InternalRow
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.analysis.TypeCheckResult
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.expressions._
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.catalyst.expressions.aggregate.TypedImperativeAggregate
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> org.apache.spark.sql.types._
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>import</span> java.io.<span style=color:#f92672>{</span><span style=color:#a6e22e>ByteArrayInputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ByteArrayOutputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ObjectInputStream</span><span style=color:#f92672>,</span> <span style=color:#a6e22e>ObjectOutputStream</span><span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>case</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>Average</span><span style=color:#f92672>(</span><span style=color:#66d9ef>var</span> sum<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Long</span><span style=color:#f92672>,</span> <span style=color:#66d9ef>var</span> count<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Long</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>case</span> <span style=color:#66d9ef>class</span> <span style=color:#a6e22e>AvgTest</span><span style=color:#f92672>(</span>
+</span></span><span style=display:flex><span>                  child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span>
+</span></span><span style=display:flex><span>                  nExpression <span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span>
+</span></span><span style=display:flex><span>                  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>val</span> mutableAggBufferOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span>
+</span></span><span style=display:flex><span>                  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>val</span> inputAggBufferOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>TypedImperativeAggregate</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Average</span><span style=color:#f92672>]</span>  <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>//  private lazy val n: Long = nExpression.eval().asInstanceOf[Long]
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>def</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> <span style=color:#a6e22e>Literal</span><span style=color:#f92672>(</span><span style=color:#ae81ff>1</span><span style=color:#f92672>),</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>def</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>,</span> nExpression<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Expression</span><span style=color:#f92672>)</span> <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>this</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> nExpression<span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> checkInputDataTypes<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>TypeCheckResult</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    child<span style=color:#f92672>.</span>dataType <span style=color:#66d9ef>match</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>case</span> <span style=color:#a6e22e>LongType</span> <span style=color:#66d9ef>=&gt;</span> <span style=color:#a6e22e>TypeCheckResult</span><span style=color:#f92672>.</span><span style=color:#a6e22e>TypeCheckSuccess</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>case</span> <span style=color:#66d9ef>_</span> <span style=color:#66d9ef>=&gt;</span> <span style=color:#a6e22e>TypeCheckResult</span><span style=color:#f92672>.</span><span style=color:#a6e22e>TypeCheckFailure</span><span style=color:#f92672>(</span><span style=color:#e6db74>s&#34;</span><span style=color:#e6db74>$prettyName</span><span style=color:#e6db74> only supports long input&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> createAggregationBuffer<span style=color:#f92672>()</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>Average</span><span style=color:#f92672>(</span><span style=color:#ae81ff>0</span><span style=color:#f92672>,</span> <span style=color:#ae81ff>0</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> update<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>,</span> inputRow<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>InternalRow</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> value <span style=color:#66d9ef>=</span> child<span style=color:#f92672>.</span>eval<span style=color:#f92672>(</span>inputRow<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    buffer<span style=color:#f92672>.</span>sum <span style=color:#f92672>+=</span> value<span style=color:#f92672>.</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Long</span><span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>    buffer<span style=color:#f92672>.</span>count <span style=color:#f92672>+=</span> <span style=color:#ae81ff>1</span>
+</span></span><span style=display:flex><span>    buffer
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> merge<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>,</span> other<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    buffer<span style=color:#f92672>.</span>sum <span style=color:#f92672>+=</span> other<span style=color:#f92672>.</span>sum
+</span></span><span style=display:flex><span>    buffer<span style=color:#f92672>.</span>count <span style=color:#f92672>+=</span> other<span style=color:#f92672>.</span>count
+</span></span><span style=display:flex><span>    buffer
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> eval<span style=color:#f92672>(</span>buffer<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Any</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> n<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span> <span style=color:#f92672>=</span> nExpression<span style=color:#f92672>.</span>eval<span style=color:#f92672>().</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Int</span><span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>((</span>buffer<span style=color:#f92672>.</span>sum<span style=color:#f92672>*</span>n<span style=color:#f92672>)/(</span>buffer<span style=color:#f92672>.</span>count<span style=color:#f92672>))</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewMutableAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>AvgTest</span> <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>    copy<span style=color:#f92672>(</span>mutableAggBufferOffset <span style=color:#66d9ef>=</span> newOffset<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> withNewInputAggBufferOffset<span style=color:#f92672>(</span>newOffset<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Int</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>AvgTest</span> <span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>    copy<span style=color:#f92672>(</span>inputAggBufferOffset <span style=color:#66d9ef>=</span> newOffset<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> children<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Seq</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Expression</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Seq</span><span style=color:#f92672>(</span>child<span style=color:#f92672>,</span> nExpression<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> nullable<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Boolean</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#75715e>// The result type is the same as the input type.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> dataType<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>DataType</span> <span style=color:#f92672>=</span> child<span style=color:#f92672>.</span>dataType
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> prettyName<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>String</span> <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;avg_test&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> serialize<span style=color:#f92672>(</span>obj<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span><span style=color:#f92672>)</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>]</span> <span style=color:#66d9ef>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> stream<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>ByteArrayOutputStream</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ByteArrayOutputStream</span><span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> oos <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ObjectOutputStream</span><span style=color:#f92672>(</span>stream<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    oos<span style=color:#f92672>.</span>writeObject<span style=color:#f92672>(</span>obj<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    oos<span style=color:#f92672>.</span>close<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>    stream<span style=color:#f92672>.</span>toByteArray
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>override</span> <span style=color:#66d9ef>def</span> deserialize<span style=color:#f92672>(</span>bytes<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>Byte</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Average</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> ois <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ObjectInputStream</span><span style=color:#f92672>(</span><span style=color:#66d9ef>new</span> <span style=color:#a6e22e>ByteArrayInputStream</span><span style=color:#f92672>(</span>bytes<span style=color:#f92672>))</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> value <span style=color:#66d9ef>=</span> ois<span style=color:#f92672>.</span>readObject
+</span></span><span style=display:flex><span>    ois<span style=color:#f92672>.</span>close<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>    value<span style=color:#f92672>.</span>asInstanceOf<span style=color:#f92672>[</span><span style=color:#66d9ef>Average</span><span style=color:#f92672>]</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span></code></pre></div><ul><li>Driver code :</li></ul><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-Scala data-lang=Scala><span style=display:flex><span><span style=color:#66d9ef>object</span> <span style=color:#a6e22e>TestAgg</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>object</span> <span style=color:#a6e22e>BegRegister</span> <span style=color:#66d9ef>extends</span> <span style=color:#a6e22e>NativeFunctionRegistration</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> expressions<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Map</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span>, <span style=color:#f92672>(</span><span style=color:#66d9ef>ExpressionInfo</span>, <span style=color:#66d9ef>FunctionBuilder</span><span style=color:#f92672>)]</span> <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>Map</span><span style=color:#f92672>(</span>
+</span></span><span style=display:flex><span>      expression<span style=color:#f92672>[</span><span style=color:#66d9ef>AvgTest</span><span style=color:#f92672>](</span><span style=color:#e6db74>&#34;multiply_average&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>def</span> main<span style=color:#f92672>(</span>args<span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Array</span><span style=color:#f92672>[</span><span style=color:#66d9ef>String</span><span style=color:#f92672>])</span><span style=color:#66d9ef>:</span> <span style=color:#66d9ef>Unit</span> <span style=color:#f92672>=</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> conf <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>SparkConf</span><span style=color:#f92672>().</span>setMaster<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;local[*]&#34;</span><span style=color:#f92672>).</span>setAppName<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;FirstDemo&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> sc <span style=color:#66d9ef>=</span> <span style=color:#66d9ef>new</span> <span style=color:#a6e22e>SparkContext</span><span style=color:#f92672>(</span>conf<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>val</span> spark <span style=color:#66d9ef>=</span> <span style=color:#a6e22e>SparkSession</span><span style=color:#f92672>.</span>builder<span style=color:#f92672>().</span>appName<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;Demo&#34;</span><span style=color:#f92672>).</span>config<span style=color:#f92672>(</span>conf<span style=color:#f92672>).</span>getOrCreate<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>BegRegister</span><span style=color:#f92672>.</span>registerFunctions<span style=color:#f92672>(</span>spark<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>val</span> df <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>read<span style=color:#f92672>.</span>json<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;src/test/resources/employees.json&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      df<span style=color:#f92672>.</span>createOrReplaceTempView<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;employees&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      df<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>      <span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +-------+------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |   name|salary|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +-------+------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |Michael|  3000|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |   Andy|  4500|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      | Justin|  3500|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |  Berta|  4000|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +-------+------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>       */</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>val</span> result <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      result<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |average_salary|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |          3750|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     */</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>val</span> result1 <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary, 2) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      result1<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>      <span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |average_salary|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |          7500|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>     */</span>
+</span></span><span style=display:flex><span>      <span style=color:#66d9ef>val</span> result2 <span style=color:#66d9ef>=</span> spark<span style=color:#f92672>.</span>sql<span style=color:#f92672>(</span><span style=color:#e6db74>&#34;SELECT multiply_average(salary, 3) as average_salary FROM employees&#34;</span><span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>      result2<span style=color:#f92672>.</span>show<span style=color:#f92672>()</span>
+</span></span><span style=display:flex><span>      <span style=color:#75715e>/*
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |average_salary|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      |         11250|
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      +--------------+
+</span></span></span><span style=display:flex><span><span style=color:#75715e>      */</span>
+</span></span><span style=display:flex><span>  <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span></code></pre></div><ul><li>Here, <code>nExpression</code> represents our <code>n</code> argument. Other lines are self-explanatory.</li></ul></section><div class=post-tags></div></article></main><footer><hr><a class=soc href=https://github.com/shivamanipatil title=GitHub><i data-feather=github></i></a>|<a class=soc href=https://twitter.com/ShivamaniPatil_ title=Twitter><i data-feather=twitter></i></a>|⚡️
+2022 <a href=https://github.com/athul/archie>Archie Theme</a> | Built with <a href=https://gohugo.io>Hugo</a></footer><script>feather.replace()</script></div></body></html>
