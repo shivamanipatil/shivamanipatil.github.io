@@ -85,7 +85,7 @@ useful. 64 bit hash function would be usable till 1.8 * 10^19 cardinalities (whi
 Here you can see size increased by just m bits or 2 KB(if m = 2^14 with error=0.008125).
 
 
-## Estimating small cardinalities
+### Estimating small cardinalities
 
 Raw estimate of original hll algorithm gives large error for small cardinalities. To reduce the error original algorithm uses linear counting for cardinalities less than 5*m/2. 
 
@@ -98,7 +98,7 @@ This figure from [Improvement paper](https://storage.googleapis.com/pub-tools-pu
 From this they concluded to perform linear counting till 11500 for p = 14 and bias correction after that.
 
 
-## Sparse representation
+### Sparse representation
 
 When n << m, then most of the bins(2^14 if p=14) are empty and memory is wasted. So instead we can store just pairs of (idx, R) values (idx - index of bin, R - longest consecutive zeros sequence observed by that bin). 
 
